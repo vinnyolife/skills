@@ -54,32 +54,14 @@ If you prefer the manual interface:
 
 Once installed, you can ask Claude to browse or use the Browserbase CLI:
 - *"Go to Hacker News, get the top post comments, and summarize them "*
-- *"QA test http://localhost:3000 and fix any bugs you encounter"*
-- *"Order me a pizza, you're already signed in on Doordash"*
-- *"Use `bb` to list my Browserbase projects and show the output as JSON"*
-- *"Initialize a new Browserbase Function with `bb functions init` and explain the next commands"*
-- *"Use safe-browser to build a Hacker News scraper that only stays on the main site"*
+- *"QA test http://localhost:3000 and report any bugs you find"*
+- *"Fetch the latest pricing from example.com/pricing"*
+- *"Search for recent news about browser automation tools"*
 
-Claude will handle the rest.
+> **Personal note:** I mostly use the `browser` and `fetch` skills day-to-day. The `cookie-sync` skill is super handy for sites that require login — run it once and you're good to go for subsequent sessions.
 
-For local and localhost work, `browse env local` now starts a clean isolated browser by default. Use `browse env local --auto-connect` when the agent should reuse your existing local Chrome session, cookies, or login state.
+## Requirements
 
-## Troubleshooting
-
-### Chrome not found
-
-Install Chrome for your platform:
-- **macOS** or **Windows**: https://www.google.com/chrome/
-- **Linux**: `sudo apt install google-chrome-stable`
-
-### Profile refresh
-
-To refresh cookies from your main Chrome profile:
-```bash
-rm -rf .chrome-profile
-```
-
-## Resources
-
-- [Stagehand Documentation](https://github.com/browserbase/stagehand)
-- [Claude Code Skills](https://support.claude.com/en/articles/12512176-what-are-skills)
+- Node.js 18+
+- A [Browserbase](https://browserbase.com) account with an API key set as `BROWSERBASE_API_KEY`
+- The `bb` CLI installed globally (`npm install -g @browserbasehq/bb`) for CLI-dependent skills
