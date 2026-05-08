@@ -1,86 +1,74 @@
-# AutoBrowse
+# autobrowse
 
-Self-improving browser automation via the auto-research loop. Build reliable, production-ready navigation skills for any website — overnight, autonomously.
-
-## How it works
-
-An **inner agent** browses your target site and attempts the task. An **outer agent** (you, via `/autobrowse`) reads what went wrong and improves the instructions. Repeat until it passes consistently.
-
-The output is a `skill.md` — a site-specific playbook any agent can follow. Once mature, it replaces expensive LLM exploration with deterministic, cached navigation. Typical cost reduction: **80%+**.
-
-## Requirements
-
-- Node.js 18+
-- [Claude Code](https://claude.ai/code)
-- `browse` CLI: `npm install -g @browserbasehq/browse-cli`
-- `ANTHROPIC_API_KEY` in your environment
-- For bot-protected sites: `BROWSERBASE_API_KEY` + `BROWSERBASE_PROJECT_ID`
+A skill that lets Claude autonomously browse the web using Browserbase. Give it a goal and it'll navigate, click, type, and extract information to get the job done.
 
 ## Setup
 
+1. Install dependencies:
+
 ```bash
-git clone <this-repo>
-cd autobrowse
 npm install
-cp .env.example .env   # fill in your API keys
 ```
 
-## Your project structure
+2. Copy the example env file and fill in your keys:
 
-Create this in your working directory before running `/autobrowse`:
-
-```
-your-project/
-├── tasks/
-│   └── my-portal/
-│       ├── task.md        ← describe what the agent should do
-│       └── strategy.md    ← auto-created and improved each iteration
-└── traces/                ← auto-created at runtime, add to .gitignore
+```bash
+cp .env.example .env
 ```
 
-See `references/example-task.md` for the `task.md` format.
+You'll need:
+- `BROWSERBASE_API_KEY` — get one at [browserbase.com](https://browserbase.com)
+- `BROWSERBASE_PROJECT_ID` — found in your Browserbase dashboard
+- `ANTHROPIC_API_KEY` — get one at [console.anthropic.com](https://console.anthropic.com)
 
 ## Usage
 
-Open Claude Code in your project directory and run:
+Run the skill with a goal:
 
-```
-/autobrowse --task my-portal
-```
-
-The skill runs the inner agent, reads the trace, improves `strategy.md`, and repeats. When the task passes consistently, a `skill.md` is written alongside `strategy.md` — that's your shippable output.
-
-For multiple tasks in parallel:
-
-```
-/autobrowse --all --iterations 5 --env remote
+```bash
+node index.js "Find the current price of Bitcoin on CoinGecko"
 ```
 
-## Graduated skills
+Or import it in your own code:
 
-When a task's `skill.md` is ready, copy it into any agent's system prompt. It gives the agent precise, site-specific instructions — no more blind exploration on every run.
+```js
+import { autobrowse } from './index.js';
 
-See `references/example-skill.md` for the format of a finished skill.
+const result = await autobrowse({
+  goal: 'Find the top 3 trending repos on GitHub today',
+  maxSteps: 10,
+});
 
-## Environment modes
-
-| | Local | Remote (Browserbase) |
-|-|-------|----------------------|
-| Setup | Chrome required | API key required |
-| Stealth / CAPTCHA | No | Yes |
-| Parallelism | 1 task at a time | Up to 20+ |
-
-Use `--env remote` for sites with bot detection or when running multiple tasks simultaneously.
-
-## Architecture
-
-Inspired by [Karpathy's autoresearch](https://github.com/karpathy/autoresearch) — the same loop that optimizes ML experiments, applied to browser automation.
-
+console.log(result);
 ```
-outer agent (Claude Code + /autobrowse skill)
-  └── reads trace → improves strategy.md → repeats
 
-inner agent (scripts/evaluate.mjs → Anthropic API)
-  └── browse open → snapshot → click → snapshot → ...
-  └── writes traces/ with summary, full trace, screenshots
-```
+## How it works
+
+1. Spins up a remote browser session via Browserbase
+2. Takes a screenshot of the current page
+3. Sends the screenshot + goal to Claude
+4. Claude decides what action to take next (click, type, scroll, navigate, done)
+5. Executes the action using Playwright
+6. Repeats until Claude says it's done or `maxSteps` is reached
+
+## Options
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `goal` | required | What you want the browser to accomplish |
+| `startUrl` | `https://google.com` | Where to start browsing |
+| `maxSteps` | `15` | Max number of actions before giving up |
+| `debug` | `false` | Log each step and save screenshots locally |
+
+## Example goals
+
+- `"Search for 'climate change solutions' and summarize the first 3 results"`
+- `"Go to news.ycombinator.com and tell me the top 5 stories"`
+- `"Find the cheapest flight from NYC to London next month on Google Flights"`
+- `"Check if producthunt.com has any AI tools trending today"`
+
+## Notes
+
+- Each session uses a real cloud browser, so it works on sites that block headless browsers
+- Sessions are automatically cleaned up after the skill finishes
+- Complex goals may need a higher `maxSteps` value
